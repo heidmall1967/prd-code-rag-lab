@@ -1,0 +1,54 @@
+{
+  "id": "scorecard.branch_protection.tier1",
+  "repo": "scorecard",
+  "commit": "f92023a",
+  "claim": "When force-push and deletion probes both report protection, Scorecard awards the Branch-Protection Tier 1 score of 3.",
+  "requirement": {
+    "path": "docs/checks.md",
+    "start_line": 109,
+    "end_line": 111
+  },
+  "implementation": [
+    {
+      "path": "probes/blocksForcePushOnBranches/impl.go",
+      "symbol": "blocksForcePushOnBranches.Run",
+      "focus": [63, 71]
+    },
+    {
+      "path": "checks/evaluation/branch_protection.go",
+      "symbol": "evaluation.BranchProtection",
+      "focus": [159, 162]
+    },
+    {
+      "path": "checks/evaluation/branch_protection.go",
+      "symbol": "evaluation.deleteAndForcePushProtection",
+      "focus": [404, 413]
+    },
+    {
+      "path": "checks/evaluation/branch_protection.go",
+      "symbol": "evaluation.basicLevel",
+      "focus": [40, 40]
+    },
+    {
+      "path": "checks/evaluation/branch_protection.go",
+      "symbol": "evaluation.computeFinalScore",
+      "focus": [326, 331]
+    }
+  ],
+  "tests": [
+    {
+      "path": "probes/blocksForcePushOnBranches/impl_test.go",
+      "symbol": "blocksForcePushOnBranches.Test_Run",
+      "focus": [47, 59]
+    },
+    {
+      "path": "checks/evaluation/branch_protection_test.go",
+      "symbol": "evaluation.TestBranchProtection",
+      "focus": [118, 140]
+    }
+  ],
+  "expected": {
+    "implementation": "supports",
+    "direct_test_status": "established"
+  }
+}

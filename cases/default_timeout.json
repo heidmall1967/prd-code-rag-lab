@@ -1,0 +1,42 @@
+
+{
+"id": "httpx.default_timeout",
+"commit": "b5addb6",
+"claim": "New HTTPX clients use a five-second timeout by default.",
+"implementation_status": "supports",
+
+"requirement": {
+    "path": "docs/advanced/timeouts.md",
+    "start_line": 30,
+    "end_line": 40
+},
+"implementation": [
+    {
+    "path": "httpx/_config.py",
+    "symbol": "DEFAULT_TIMEOUT_CONFIG"
+    },
+    {
+    "path": "httpx/_client.py",
+    "symbol": "Client.__init__"
+    },
+    {
+    "path": "httpx/_client.py",
+    "symbol": "AsyncClient.__init__"
+    }
+],
+"related_tests": [
+    {
+    "path": "tests/test_config.py",
+    "name": "test_timeout_from_one_value_and_default",
+    "reason": "It passes 5.0 explicitly; it does not check the built-in client default.",
+    "expected_label": "related"
+    },
+    {
+    "path": "tests/test_config.py",
+    "name": "test_timeout_missing_default",
+    "reason": "It checks invalid configuration without a supplied default.",
+    "expected_label": "insufficient"
+    }
+],
+"direct_test_status": "not_established"
+}

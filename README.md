@@ -4,8 +4,9 @@ A local learning lab for correlating requirement, code, and test retrieval
 databases, then checking whether a small LLM's verdict survives source-based
 verification:
 
-**Start with the [interactive HTML walkthrough](LEARNING_WALKTHROUGH.html)** for
-step-by-step commands, expected results, and an explanation of every evaluation.
+**Start with the [interactive HTML walkthrough](LEARNING_WALKTHROUGH.html)** to
+turn a PRD line item into a correlation search, then follow step-by-step
+commands, expected results, and an explanation of every evaluation.
 
     lexical index (FTS5) → cited excerpt → provenance re-check against disk/git
         → bounded-context packet → LLM verdict → deterministic guardrail

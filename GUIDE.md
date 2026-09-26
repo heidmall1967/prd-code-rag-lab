@@ -105,7 +105,28 @@ proof, and evaluation. The trace can be audited against the pinned source.
 
 ## Retrieval and context engineering
 
-Search each database independently, then compare candidate citations:
+Start with one line item and choose 2–5 distinctive terms. For example,
+“Prevent force push on protected branches” becomes `force push`. Search the
+repository whose implementation you want to inspect:
+
+```bash
+python3 lab.py correlate --repo scorecard --query 'force push' --limit 10
+```
+
+Inspect `candidates.requirement`, `candidates.code`, and `candidates.test`,
+then open the cited source lines. This example surfaces Scorecard's force-push
+docs, probe, and tests. `links` are shared-word suggestions, not proof that the
+whole line item is implemented. The [HTML walkthrough](LEARNING_WALKTHROUGH.html)
+has a local query builder for this task.
+
+If the line item comes from your own, unindexed PRD, its words can drive this
+search, but the PRD itself is **not** cited or checked. Requirement candidates
+come from the selected repository's indexed docs. A verified verdict for your
+own line item requires indexing it as a pinned requirement source, reviewing
+its code/test citations, and registering a claim-specific proof. The current
+CLI does not do those steps automatically.
+
+You can also search each database independently, then compare citations:
 
 ```bash
 python3 lab.py discover --repo scorecard --kind requirement --query force

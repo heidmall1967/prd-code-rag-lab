@@ -1,27 +1,27 @@
 # prd-code-rag-lab
 
-A lab for testing whether a **small, local LLM can be trusted to verify PRD-style
-claims against real source code**, by forcing every judgment through a strict
-evidence pipeline instead of trusting the model's word:
+A local learning lab for correlating requirement, code, and test retrieval
+databases, then checking whether a small LLM's verdict survives source-based
+verification:
 
     lexical index (FTS5) → cited excerpt → provenance re-check against disk/git
         → bounded-context packet → LLM verdict → deterministic guardrail
 
-Two case studies exercise the pipeline against real open-source repos:
+Three curated claims exercise the pipeline against two open-source repos:
 
 - **httpx** (Python) — does `httpx.Client()` really default to a 5-second timeout,
   and is that backed by a direct test (not just a test that passes the value
   explicitly)?
 - **Scorecard** (Go) — does the Branch-Protection check really award Tier 1 when
   the force-push and deletion probes both report protection?
+- **httpx contradiction** — does a new client instead default to ten seconds?
 
-The interesting result so far: in the httpx case, the model's own verdict was
-wrong (it hallucinated that a test checked the built-in default when the test
-actually supplied the value explicitly). A deterministic AST guardrail in
-[`evidence_guard.py`](evidence_guard.py) catches exactly that mistake and
-flips the final verdict — see [`runs/latest.json`](runs/latest.json) for the
-full trace. That's the core thesis: don't trust the model's verdict alone,
-verify it against code.
+The original HTTPX experiment caught a model falsely crediting a related test
+as direct. In the unified workflow, two sequential local model agents review
+the same verified evidence, but deterministic, case-specific checks decide the
+final verdict. On the Scorecard case, the agents disagreed about direct testing;
+the trace retains both opinions for inspection. See [GUIDE.md](GUIDE.md) for
+the full workflow and its limits.
 
 ## Requirements
 
@@ -29,11 +29,9 @@ verify it against code.
   third-party packages needed for the Python scripts)
 - `git` (used to read/verify commit SHAs of the vendored repos)
 - Go 1.21+ (only needed to rebuild `bin/go_chunks`, the Scorecard chunker)
-- [Ollama](https://ollama.com) running locally at `127.0.0.1:11434` with the
-  `qwen2.5:1.5b` model pulled (`ollama pull qwen2.5:1.5b`) — required for
-  `judge_one.py` and `review_packet.py`, which are the only scripts that call
-  an LLM. Everything else (indexing, search, provenance verification, packet
-  building) runs without it.
+- [Ollama](https://ollama.com) running locally at `127.0.0.1:11434` with
+  `qwen2.5:1.5b` pulled for `lab.py run --mode local` and the older model
+  experiments. `--mode offline`, indexing, search, and tests need no model.
 
 ## Layout
 
@@ -74,6 +72,13 @@ review_packet.py     send a single evidence excerpt, or a whole packet, to the
 run_case.py           runs the full httpx pipeline end to end (verify →
                       check_implementation → packet → review_packet) and
                       writes a trace to runs/latest.json
+lab.py                unified CLI for discovery and role-based case runs
+lab_core.py           policy, RBAC, pinned-source retrieval, provenance,
+                      bounded packets, and agent handoffs
+lab_guards.py         narrow deterministic proofs for the curated claims
+policy.json           source allowlist, role permissions, context cap, and
+                      local-only model endpoint
+tests/test_lab.py     cross-layer regression tests
 ```
 
 ## Setup
@@ -136,13 +141,26 @@ python3 verify_scorecard.py
 python3 packet_scorecard.py
 ```
 
-## Known gaps
+## Unified learning workflow
 
-- There is no Scorecard equivalent of `run_case.py`/`review_packet.py` yet —
-  the Scorecard case only exercises indexing and provenance verification, not
-  LLM judging.
-- Only two cases exist in total, and neither currently exercises a
-  `contradicts` verdict, so the guardrail approach's generality beyond the one
-  failure mode it was built to catch is unproven.
-- `evidence_guard.py`'s two functions have no direct unit tests; they're only
-  exercised indirectly through the two end-to-end cases.
+```bash
+python3 lab.py roles
+python3 lab.py discover --repo scorecard --kind requirement --query force
+python3 lab.py correlate --repo scorecard --query 'force push'
+python3 lab.py run --case cases/default_timeout.json --mode offline
+python3 lab.py run --case cases/default_timeout_ten.json --mode offline
+python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline
+python3 lab.py run --case cases/scorecard_branch_protection.json --mode local
+python3 -m unittest discover -s tests -v
+```
+
+Each run writes an ignored JSON trace under `runs/`. See [GUIDE.md](GUIDE.md)
+for agent roles, RBAC exercises, evidence semantics, and extension steps.
+
+## Limits
+
+The registered deterministic proofs cover these three claims only. New claims
+fail closed as `insufficient`/`undetermined` until given a proof. The role
+policy is an educational application check, not isolation from someone who
+can edit local files. Both model agents use the same local model, so their
+opinions are correlated. No web UI or open-ended semantic verification exists.

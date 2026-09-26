@@ -97,7 +97,7 @@ with sqlite3.connect(root / "indexes/scorecard_tests.sqlite") as db:
     for citation in case["tests"]:
         row = db.execute(
             """
-            SELECT start_line, end_line, commit_sha
+            SELECT start_line, end_line, commit_sha, body
             FROM tests
             WHERE path = ? AND symbol = ?
             """,
@@ -113,5 +113,6 @@ with sqlite3.connect(root / "indexes/scorecard_tests.sqlite") as db:
         assert row[2] == full_commit, (
             f"Commit differs: {citation['symbol']}"
         )
+        verify_source_body(citation["path"], row[0], row[1], row[3])
 
         print(f"Verified test: {citation['symbol']}")

@@ -1,0 +1,25 @@
+{
+  "id": "httpx.default_timeout_ten",
+  "repo": "httpx",
+  "commit": "b5addb6",
+  "claim": "New HTTPX clients use a ten-second timeout by default.",
+  "requirement": {
+    "path": "docs/advanced/timeouts.md",
+    "start_line": 30,
+    "end_line": 40,
+    "focus": [30, 40]
+  },
+  "implementation": [
+    {"path": "httpx/_config.py", "symbol": "DEFAULT_TIMEOUT_CONFIG", "focus": [246, 246]},
+    {"path": "httpx/_client.py", "symbol": "Client.__init__", "focus": [652, 654]},
+    {"path": "httpx/_client.py", "symbol": "AsyncClient.__init__", "focus": [1365, 1367]}
+  ],
+  "tests": [
+    {"path": "tests/test_config.py", "name": "test_timeout_from_one_value_and_default", "focus": [136, 138]},
+    {"path": "tests/test_config.py", "name": "test_timeout_missing_default", "focus": [141, 143]}
+  ],
+  "expected": {
+    "implementation": "contradicts",
+    "direct_test_status": "not_established"
+  }
+}

@@ -45,6 +45,11 @@
       "path": "checks/evaluation/branch_protection_test.go",
       "symbol": "evaluation.TestBranchProtection",
       "focus": [118, 140]
+    },
+    {
+      "path": "checks/evaluation/branch_protection_test.go",
+      "symbol": "evaluation.TestBranchProtection",
+      "focus": [410, 417]
     }
   ],
   "expected": {

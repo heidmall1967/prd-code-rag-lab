@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "repositories": {
+    "httpx": {
+      "path": "data/httpx",
+      "commit": "b5addb64f0161ff6bfe94c124ef76f6a1fba5254",
+      "indexes": {
+        "requirement": "requirements.sqlite",
+        "code": "code.sqlite",
+        "test": "tests.sqlite"
+      }
+    },
+    "scorecard": {
+      "path": "data/scorecard",
+      "commit": "f92023a3f77879f96e0c9c1305f289d755be4bb6",
+      "indexes": {
+        "requirement": "scorecard_requirements.sqlite",
+        "code": "scorecard_code.sqlite",
+        "test": "scorecard_tests.sqlite"
+      }
+    }
+  },
+  "principals": {
+    "learner": "analyst",
+    "observer": "viewer",
+    "auditor": "auditor"
+  },
+  "roles": {
+    "analyst": {
+      "actions": ["discover", "run", "call_model", "write_trace"],
+      "sources": ["requirement", "code", "test"]
+    },
+    "viewer": {
+      "actions": ["discover"],
+      "sources": ["requirement"]
+    },
+    "auditor": {
+      "actions": ["discover", "run", "write_trace"],
+      "sources": ["requirement", "code", "test"]
+    }
+  },
+  "agent_handoffs": {
+    "retriever": ["verifier"],
+    "verifier": ["context_builder"],
+    "context_builder": ["reviewer", "adjudicator"],
+    "reviewer": ["critic", "adjudicator"],
+    "critic": ["adjudicator"],
+    "adjudicator": ["trace_writer"],
+    "trace_writer": []
+  },
+  "max_context_chars": 5000,
+  "model": {
+    "name": "qwen2.5:1.5b",
+    "url": "http://127.0.0.1:11434/api/chat",
+    "timeout_seconds": 120,
+    "num_ctx": 4096,
+    "num_predict": 220
+  }
+}

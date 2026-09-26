@@ -8,32 +8,38 @@
 "requirement": {
     "path": "docs/advanced/timeouts.md",
     "start_line": 30,
-    "end_line": 40
+    "end_line": 40,
+    "focus": [30, 40]
 },
 "implementation": [
     {
     "path": "httpx/_config.py",
-    "symbol": "DEFAULT_TIMEOUT_CONFIG"
+    "symbol": "DEFAULT_TIMEOUT_CONFIG",
+    "focus": [246, 246]
     },
     {
     "path": "httpx/_client.py",
-    "symbol": "Client.__init__"
+    "symbol": "Client.__init__",
+    "focus": [652, 654]
     },
     {
     "path": "httpx/_client.py",
-    "symbol": "AsyncClient.__init__"
+    "symbol": "AsyncClient.__init__",
+    "focus": [1365, 1367]
     }
 ],
 "related_tests": [
     {
     "path": "tests/test_config.py",
     "name": "test_timeout_from_one_value_and_default",
+    "focus": [136, 138],
     "reason": "It passes 5.0 explicitly; it does not check the built-in client default.",
     "expected_label": "related"
     },
     {
     "path": "tests/test_config.py",
     "name": "test_timeout_missing_default",
+    "focus": [141, 143],
     "reason": "It checks invalid configuration without a supplied default.",
     "expected_label": "insufficient"
     }

@@ -226,6 +226,8 @@ class LabWorkflowTests(unittest.TestCase):
         )
         self.assertTrue(all(pluggy["candidates"][kind]
                             for kind in ("requirement", "code", "test")))
+        self.assertEqual(pluggy["candidates"]["code"][0]["label"],
+                         "_execution._multicall")
         self.assertFalse(any(link["symbol"] == "_manager"
                              for link in pluggy["symbol_references"]))
 

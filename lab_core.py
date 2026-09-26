@@ -256,7 +256,8 @@ def correlate_candidates(store: EvidenceStore, query: str,
     for kind in TABLES:
         found: dict[tuple, dict] = {}
         for term in terms:
-            for row in store.search(kind, term, limit=max(limit, 8)):
+            for rank, row in enumerate(
+                    store.search(kind, term, limit=max(limit, 8)), 1):
                 key = (row["path"], row["start_line"], row["end_line"],
                        row["label"])
                 if key not in found:
@@ -267,13 +268,18 @@ def correlate_candidates(store: EvidenceStore, query: str,
                         ref[KEYS[store.repository][kind]] = row["label"]
                     item = store.fetch(kind, ref)
                     found[key] = {"evidence": item, "hits": set(),
-                                  "best_bm25": row["score"]}
+                                  "best_bm25": row["score"],
+                                  "best_rank": rank}
                 found[key]["hits"].add(term)
+                found[key]["best_rank"] = min(
+                    found[key]["best_rank"], rank
+                )
                 found[key]["best_bm25"] = min(
                     found[key]["best_bm25"], row["score"]
                 )
         ranked = sorted(found.values(), key=lambda item: (
-            -len(item["hits"]), item["best_bm25"], item["evidence"].citation
+            -len(item["hits"]), item["best_rank"], item["best_bm25"],
+            item["evidence"].citation
         ))[:limit]
         groups[kind] = ranked
 

@@ -124,10 +124,10 @@ This second hop finds HTTPX client constructors through
 candidate links, not semantic proof. For Python code, a small second-stage
 signal promotes functions where a searched name controls a branch containing
 `break` or `return`. This moves Pluggy's `_multicall` from rank 11 to rank 1
-for `firstresult`; the signal only changes candidate order and does not prove
-the claim. Camel-case Go symbols may still require searching the
-exact symbol or inspecting source manually. Case files preserve
-reviewed citations and small
+for `firstresult` in both `discover` and `correlate`; the signal only changes
+candidate order and does not prove the claim. Camel-case Go symbols may still
+require searching the exact symbol or inspecting source manually. Case files
+preserve reviewed citations and small
 `focus` ranges. `lab_core.py` rejects a stale index, a source mismatch, a path
 outside the source checkout, or a focus outside the indexed symbol. It then
 builds a line-numbered packet from the source file. The policy caps it at

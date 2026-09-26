@@ -26,6 +26,12 @@ separate prompts and handoff records demonstrate agent interaction, but they
 are not independent models. `--mode offline` skips them and runs the same
 retrieval, verification, packet, and adjudication stages.
 
+This is lexical RAG: FTS5 retrieval supplies passages, verified excerpts
+augment the prompt, and the local model generates reviewer/critic judgments.
+`correlate` discovers candidates, while `run --mode local` uses citations
+already selected in a case file; automatic selection for a new PRD line is not
+implemented. The final verdict is deterministic rather than model-generated.
+
 ## Data and reproducibility
 
 | Source | Used as | License | Pinned commit |
@@ -36,7 +42,9 @@ retrieval, verification, packet, and adjudication stages.
 
 The repository contains the lab's own code and case definitions. The source
 clones and generated indexes are ignored by Git. Rebuild them from the pinned
-source commits:
+source commits with `bash bootstrap.sh` from the project root. That command
+also runs the lab tests and retrieval benchmark. To rebuild each component
+manually instead, use:
 
 ```bash
 git clone https://github.com/encode/httpx.git data/httpx

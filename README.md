@@ -11,6 +11,58 @@ commands, expected results, and an explanation of every evaluation.
     lexical index (FTS5) → cited excerpt → provenance re-check against disk/git
         → bounded-context packet → LLM verdict → deterministic guardrail
 
+This is a lexical RAG learning pipeline: retrieval uses FTS5, augmentation
+puts verified excerpts into a bounded prompt, and local Ollama generates
+reviewer/critic judgments. Candidate discovery and case execution are separate:
+the runner uses reviewed citations in a case file, not automatic evidence
+selection for an arbitrary PRD line. Its deterministic guardrail decides the
+final verdict.
+
+## Fresh clone: run the lab
+
+The repository is currently **private**, so a person needs GitHub access to
+clone it. It intentionally excludes the upstream source clones, generated
+SQLite indexes, binaries, and traces. A fresh clone needs one bootstrap run.
+On Ubuntu, install Python 3.12+, Git, and Go 1.21+ first. Python scripts use
+only the standard library with SQLite FTS5; no pip install is needed.
+
+```bash
+git clone https://github.com/heidmall1967/prd-code-rag-lab.git
+cd prd-code-rag-lab
+bash bootstrap.sh
+```
+
+The script clones open-source HTTPX, OpenSSF Scorecard, and Pluggy at the
+commits in [policy.json](policy.json), builds all nine SQLite indexes and the
+Go chunker, then runs the 15 lab tests and retrieval benchmark. It checks
+existing source checkouts before rebuilding, so you can rerun it. Cloning the
+three upstream repositories requires internet access and may take a while;
+after setup, offline case runs do not.
+
+```bash
+xdg-open LEARNING_WALKTHROUGH.html
+python3 lab.py correlate --repo scorecard --query 'force push' --limit 10
+python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline
+```
+
+Successful setup ends with `Ran 15 tests`, `OK`, and a benchmark report with
+`recall_at_k: 0.8`. The case command should print `supports`,
+`established`, and `Evaluation: PASS`. The HTML walkthrough shows the PRD-line
+search workflow and explains what these labels mean.
+
+The model is optional. For local reviewer/critic runs, install Ollama, pull
+the policy-pinned model, and start its local service:
+
+```bash
+ollama pull qwen2.5:1.5b
+ollama serve
+```
+
+In a second terminal, run
+`python3 lab.py run --case cases/pluggy_firstresult_list.json --mode local`.
+The final guardrail should return `contradicts / not_established` even if the
+model disagrees.
+
 Six curated cases exercise the pipeline against three open-source repos:
 
 - **httpx** (Python) — does `httpx.Client()` really default to a 5-second timeout,
@@ -94,10 +146,11 @@ benchmarks/retrieval.json
                       five target citations and their natural-language queries
 ```
 
-## Setup
+## Manual source setup
 
-The vendored repos in `data/` must exist and be checked out at the exact
-commits the case files reference. If they're missing:
+Use `bash bootstrap.sh` for the complete setup. If rebuilding individual
+pieces while learning, the source repos in `data/` must match the pinned
+commits. For example:
 
 ```bash
 git clone https://github.com/encode/httpx.git data/httpx
@@ -197,4 +250,6 @@ The registered deterministic proofs cover these six cases only. New claims
 fail closed as `insufficient`/`undetermined` until given a proof. The role
 policy is an educational application check, not isolation from someone who
 can edit local files. Both model agents use the same local model, so their
-opinions are correlated. No web UI or open-ended semantic verification exists.
+opinions are correlated. The HTML walkthrough generates local commands but is
+not a browser front end for running retrieval. Open-ended semantic verification
+does not exist.

@@ -31,6 +31,7 @@ augment the prompt, and the local model generates reviewer/critic judgments.
 `correlate` discovers candidates, while `run --mode local` uses citations
 already selected in a case file; automatic selection for a new PRD line is not
 implemented. The final verdict is deterministic rather than model-generated.
+The planned general workflow is specified in [Phase 2](PHASE2.md).
 
 ## Data and reproducibility
 

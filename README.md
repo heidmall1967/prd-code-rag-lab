@@ -18,6 +18,10 @@ the runner uses reviewed citations in a case file, not automatic evidence
 selection for an arbitrary PRD line. Its deterministic guardrail decides the
 final verdict.
 
+The general new-PRD-line workflow is planned as [Phase 2](PHASE2.md). It will
+index a separate open-source requirements source, retrieve citable code and
+tests automatically, and evaluate uncertain as well as supported outcomes.
+
 ## Fresh clone: run the lab
 
 The repository is currently **private**, so a person needs GitHub access to
@@ -331,3 +335,5 @@ can edit local files. Both model agents use the same local model, so their
 opinions are correlated. The HTML walkthrough generates local commands but is
 not a browser front end for running retrieval. Open-ended semantic verification
 does not exist.
+
+See [Phase 2](PHASE2.md) for the next build scope and acceptance checks.

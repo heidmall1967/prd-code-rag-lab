@@ -33,6 +33,11 @@ The CLI-first version is documented in `GUIDE.md` and stored in the private repo
 
 ## Later work
 
+The next agreed scope is [Phase 2](PHASE2.md): index a pinned open-source PRD
+as its own citable source, retrieve code and tests for a selected line item,
+make a cautious assessment, and evaluate matches, misses, and misleading
+evidence. This is documented for later; it is not implemented yet.
+
 Possible extensions are a local browser UI, more independent open-source requirements and repositories, stronger semantic reranking, negative Scorecard cases, and isolated RBAC identities rather than a CLI-selected principal. The current proofs are intentionally claim-specific; arbitrary new claims fail closed. The reviewer and critic use the same local model and should not be treated as independent evidence.
 
 The user also asked how to switch this session to their ChatGPT Plus plan. That question remains unanswered; verify current official OpenAI guidance before answering it if they raise it again.

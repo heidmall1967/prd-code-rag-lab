@@ -20,10 +20,16 @@ Build a from-scratch learning lab that correlates separate requirement, implemen
 
 ## Current status
 
-The assistant asked whether the first complete version should remain CLI-only or add a local browser UI; no reply has arrived. CLI-first is implemented and documented in `GUIDE.md`. The unified workflow, three case evaluations, and regression suite have passed. This remains an educational, claim-specific verifier rather than a general PRD-to-code proof engine.
+The CLI-first version is complete and documented in `GUIDE.md`. Feature commit `9dc04f6` was pushed to the private repository `https://github.com/heidmall1967/prd-code-rag-lab` on `main`. The unified workflow, three case evaluations, and 11 regression tests passed. The source clones, SQLite indexes, binaries, and traces are ignored by Git and can be rebuilt using `GUIDE.md`. Ollama was stopped after the local model runs; start it again for `--mode local`. This remains an educational, claim-specific verifier rather than a general PRD-to-code proof engine.
+
+## Resume from here
+
+1. Open `/home/gsharma/prd-code-rag-lab` and read `GUIDE.md` for the CLI commands and architecture.
+2. Run `python3 -m unittest discover -s tests -v` for a quick baseline. Run `python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline` for an end-to-end source check.
+3. Choose the next learning milestone: a small local browser UI, or broader evidence coverage with a new open-source repository and claim. The latter is recommended to test whether the design generalizes beyond the three curated cases.
 
 ## Later work
 
-Possible next learning extensions are a local browser UI, more independent open-source requirements and repositories, stronger semantic reranking, negative Scorecard cases, and isolated RBAC identities rather than a CLI-selected principal. The current proofs are intentionally claim-specific; arbitrary new claims fail closed.
+Possible extensions are a local browser UI, more independent open-source requirements and repositories, stronger semantic reranking, negative Scorecard cases, and isolated RBAC identities rather than a CLI-selected principal. The current proofs are intentionally claim-specific; arbitrary new claims fail closed. The reviewer and critic use the same local model and should not be treated as independent evidence.
 
-The user also asked how to switch this session to their ChatGPT Plus plan. That question remains unanswered; verify current official OpenAI guidance before answering it. There is no Git repository at the project root, so this checkpoint is a file, not a Git commit.
+The user also asked how to switch this session to their ChatGPT Plus plan. That question remains unanswered; verify current official OpenAI guidance before answering it if they raise it again.

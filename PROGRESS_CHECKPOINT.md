@@ -18,16 +18,18 @@ Build a from-scratch learning lab that correlates separate requirement, implemen
 - The unified `lab.py` workflow runs four curated claims: HTTPX's five-second default (`supports`), a ten-second default counterclaim (`contradicts`), Scorecard Tier 1 (`supports`), and Pluggy's first non-`None` scalar result (`supports`). It retrieves from separate FTS5 indexes, checks pinned source, builds bounded packets, runs optional sequential reviewer/critic model agents, applies narrow deterministic proofs, enforces application-level RBAC, and writes JSON traces.
 - `lab.py correlate` searches requirement, code, and test databases together, suggests lexical links, and follows code-symbol references. Candidates are verified against source but remain suggestions until curated into a case.
 - Thirteen cross-layer regression tests pass. Local Qwen2.5 1.5B runs passed all four cases. On the ten-second counterclaim, the reviewer wrongly returned `supports`; the deterministic final verdict returned `contradicts` and recorded the disagreement.
+- Final retrieval phase: `benchmark_retrieval.py` evaluates five pinned evidence targets. Pluggy `_multicall` was rank 11 for `firstresult`; an inspectable Python control-flow reranker moves it to rank 1. Recall@5 improved from 3/5 to 4/5 and MRR@20 from 0.643 to 0.825. The direct Pluggy test remains rank 8.
+- Two Pluggy adversarial cases now exercise a false list-return claim and a related-but-incomplete `None` test. Both offline and local model runs passed the final evaluation. The local model made three and two verdict errors, respectively, which the deterministic guardrail corrected. The regression suite has 15 passing tests.
 
 ## Current status
 
-The CLI-first version is documented in `GUIDE.md` and stored in the private repository `https://github.com/heidmall1967/prd-code-rag-lab` on `main`. The unified workflow, four case evaluations, and 13 regression tests passed. The source clones, SQLite indexes, binaries, and traces are ignored by Git and can be rebuilt using `GUIDE.md`. Start Ollama for `--mode local`. This remains an educational, claim-specific verifier rather than a general PRD-to-code proof engine.
+The CLI-first version is documented in `GUIDE.md` and stored in the private repository `https://github.com/heidmall1967/prd-code-rag-lab` on `main`. The unified workflow, six case evaluations, retrieval benchmark, and 15 regression tests passed. The source clones, SQLite indexes, binaries, and traces are ignored by Git and can be rebuilt using `GUIDE.md`. Start Ollama for `--mode local`. This remains an educational, claim-specific verifier rather than a general PRD-to-code proof engine.
 
 ## Resume from here
 
 1. Open `/home/gsharma/prd-code-rag-lab` and read `GUIDE.md` for the CLI commands and architecture.
 2. Run `python3 -m unittest discover -s tests -v` for a quick baseline. Run `python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline` for an end-to-end source check.
-3. Choose the next learning milestone: improve ranking so Pluggy's `_multicall` implementation surfaces automatically, add a negative Pluggy case, or build a small local browser UI. Ranking is the recommended next experiment because the new source exposed a concrete retrieval miss.
+3. The agreed final retrieval/guardrail phase is complete. If extending the lab, the remaining benchmark miss is Pluggy's direct test at rank 8; a local browser UI is optional.
 
 ## Later work
 

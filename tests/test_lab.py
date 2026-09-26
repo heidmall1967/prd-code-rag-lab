@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import lab_core
+from benchmark_retrieval import measure
 from lab import ask_local_model
 from lab_core import (ROOT, EvidenceStore, LabError, authorize, build_packet,
                       case_references, correlate_candidates, handoff, load_case,
@@ -82,6 +83,27 @@ class LabWorkflowTests(unittest.TestCase):
         result = prove(case, store.repo, reduced)
         self.assertEqual(result.implementation, "supports")
         self.assertEqual(result.direct_test_status, "not_established")
+
+    def test_adversarial_pluggy_cases_keep_claim_and_test_separate(self):
+        false_claim, store, evidence = self.evidence_for(
+            "pluggy_firstresult_list.json")
+        verdict = prove(false_claim, store.repo, evidence)
+        self.assertEqual((verdict.implementation, verdict.direct_test_status),
+                         ("contradicts", "not_established"))
+
+        related_test, store, evidence = self.evidence_for(
+            "pluggy_firstresult_related_test.json")
+        verdict = prove(related_test, store.repo, evidence)
+        self.assertEqual((verdict.implementation, verdict.direct_test_status),
+                         ("supports", "not_established"))
+
+    def test_retrieval_benchmark_surfaces_pluggy_execution_logic(self):
+        examples = json.loads((ROOT / "benchmarks/retrieval.json").read_text())
+        report = measure(self.policy, examples)
+        ranks = {row["id"]: row["rank"] for row in report["examples"]}
+        self.assertEqual(ranks["pluggy-execution"], 1)
+        self.assertGreaterEqual(report["recall_at_k"], 0.8)
+        self.assertEqual(len(report["examples"]), len(examples))
 
     def test_pinned_pluggy_runtime_skips_none_and_stops(self):
         source = str((ROOT / "data/pluggy/src").resolve())

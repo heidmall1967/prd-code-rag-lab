@@ -72,6 +72,8 @@ python3 lab.py run --case cases/default_timeout.json --mode offline
 python3 lab.py run --case cases/default_timeout_ten.json --mode offline
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline
 python3 lab.py run --case cases/pluggy_firstresult.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult_list.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult_related_test.json --mode offline
 python3 lab.py run --case cases/pluggy_firstresult.json --mode local
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode local
 ```
@@ -84,11 +86,18 @@ The expected final results are:
 | HTTPX ten-second default | `contradicts` | `not_established` |
 | Scorecard Branch-Protection Tier 1 | `supports` | `established` |
 | Pluggy first non-`None` scalar result | `supports` | `established` |
+| Pluggy claim that `firstresult` returns a list | `contradicts` | `not_established` |
+| Pluggy scalar claim with only a related `None` test | `supports` | `not_established` |
 
 `not_established` means the **cited tests** do not establish that exact claim;
 it does not assert that no suitable test exists elsewhere. `expected` in a case
 file is used only after adjudication to grade the result. It is never sent to
 the model or used to choose the final verdict.
+
+In local-model runs, Qwen2.5 1.5B incorrectly supported the false Pluggy list
+claim and incorrectly called both adversarial test sets direct. The final
+guardrail returned the expected results and recorded three and two model
+disagreements, respectively.
 
 Every run writes a JSON trace under `runs/` with the source commit, citations,
 packet hash and size, agent handoffs, model opinions, disagreements, final
@@ -112,16 +121,32 @@ merges candidates from all three databases, suggests links on shared query
 terms, and follows prominent code symbols into a second set of references.
 This second hop finds HTTPX client constructors through
 `DEFAULT_TIMEOUT_CONFIG`, which a plain timeout query ranks poorly. These are
-candidate links, not semantic proof. The Pluggy `firstresult` query ranks hook
-dispatch helpers above the core `_multicall` loop; that loop was chosen after
-source inspection. Camel-case Go symbols may still require searching the
+candidate links, not semantic proof. For Python code, a small second-stage
+signal promotes functions where a searched name controls a branch containing
+`break` or `return`. This moves Pluggy's `_multicall` from rank 11 to rank 1
+for `firstresult`; the signal only changes candidate order and does not prove
+the claim. Camel-case Go symbols may still require searching the
 exact symbol or inspecting source manually. Case files preserve
 reviewed citations and small
 `focus` ranges. `lab_core.py` rejects a stale index, a source mismatch, a path
 outside the source checkout, or a focus outside the indexed symbol. It then
 builds a line-numbered packet from the source file. The policy caps it at
 5,000 characters; overflow fails closed rather than silently omitting cited
-evidence. To experiment with a smaller budget:
+evidence.
+
+Measure five pinned, hand-reviewed targets with:
+
+```bash
+python3 benchmark_retrieval.py
+```
+
+On this fixture, recall at five improved from 3/5 to 4/5, and mean reciprocal
+rank at 20 from 0.643 to 0.825. The remaining miss is Pluggy's direct scalar
+test at rank 8. The benchmark is small and checks discovery ranking, not
+semantic correctness; inspect the per-target ranks before changing the
+retriever.
+
+To experiment with a smaller budget:
 
 ```bash
 python3 lab.py run --case cases/scorecard_branch_protection.json --budget 2000

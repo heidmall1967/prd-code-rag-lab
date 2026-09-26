@@ -1,0 +1,37 @@
+[
+  {
+    "id": "pluggy-execution",
+    "repo": "pluggy",
+    "kind": "code",
+    "query": "firstresult",
+    "target": {"path": "src/pluggy/_execution.py", "symbol": "_execution._multicall", "start_line": 89, "end_line": 197}
+  },
+  {
+    "id": "pluggy-docs",
+    "repo": "pluggy",
+    "kind": "requirement",
+    "query": "firstresult",
+    "target": {"path": "docs/index.rst", "start_line": 671, "end_line": 688}
+  },
+  {
+    "id": "pluggy-direct-test",
+    "repo": "pluggy",
+    "kind": "test",
+    "query": "firstresult",
+    "target": {"path": "testing/test_invocations.py", "name": "test_firstresult_definition", "start_line": 126, "end_line": 170}
+  },
+  {
+    "id": "httpx-default-constant",
+    "repo": "httpx",
+    "kind": "code",
+    "query": "default timeout",
+    "target": {"path": "httpx/_config.py", "symbol": "DEFAULT_TIMEOUT_CONFIG", "start_line": 246, "end_line": 246}
+  },
+  {
+    "id": "scorecard-force-probe",
+    "repo": "scorecard",
+    "kind": "code",
+    "query": "force",
+    "target": {"path": "probes/blocksForcePushOnBranches/impl.go", "symbol": "blocksForcePushOnBranches.Run", "start_line": 40, "end_line": 82}
+  }
+]

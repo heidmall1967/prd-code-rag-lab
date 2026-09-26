@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import ast
 import re
 import sqlite3
 import subprocess
+import textwrap
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
@@ -193,12 +195,38 @@ class EvidenceStore:
         key = "heading" if kind == "requirement" else KEYS[self.repository][kind]
         with closing(self._connect(kind)) as db:
             rows = db.execute(
-                f"SELECT {key}, path, start_line, end_line, commit_sha, "
+                f"SELECT {key}, path, start_line, end_line, commit_sha, body, "
                 f"bm25({table}) FROM {table} WHERE {table} MATCH ? "
-                f"ORDER BY bm25({table}) LIMIT ?", (match, limit),
+                f"ORDER BY bm25({table}) LIMIT ?", (match, max(limit, 20)),
             ).fetchall()
+        if kind == "code" and self.repository in {"httpx", "pluggy"}:
+            # A term used to decide a branch that exits the function is stronger
+            # implementation evidence than a passing reference or docstring.
+            rows.sort(key=lambda row: (
+                -_branch_exit_match(row[5], terms), row[6], row[1], row[2]
+            ))
         return [dict(label=r[0], path=r[1], start_line=int(r[2]),
-                     end_line=int(r[3]), commit=r[4], score=r[5]) for r in rows]
+                     end_line=int(r[3]), commit=r[4], score=r[6])
+                for r in rows[:limit]]
+
+
+def _branch_exit_match(body: str, terms: list[str]) -> int:
+    """Detect a searched name governing a return or break in Python code."""
+    try:
+        tree = ast.parse(textwrap.dedent(body))
+    except SyntaxError:
+        return 0
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.If):
+            continue
+        names = {name.id.lower() for name in ast.walk(node.test)
+                 if isinstance(name, ast.Name)}
+        if not names.intersection(terms):
+            continue
+        if any(isinstance(child, (ast.Break, ast.Return))
+               for statement in node.body for child in ast.walk(statement)):
+            return 1
+    return 0
 
 
 def build_packet(case: dict, evidence: list[Evidence], budget: int) -> str:

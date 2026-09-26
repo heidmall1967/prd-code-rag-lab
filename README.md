@@ -7,7 +7,7 @@ verification:
     lexical index (FTS5) → cited excerpt → provenance re-check against disk/git
         → bounded-context packet → LLM verdict → deterministic guardrail
 
-Four curated claims exercise the pipeline against three open-source repos:
+Six curated cases exercise the pipeline against three open-source repos:
 
 - **httpx** (Python) — does `httpx.Client()` really default to a 5-second timeout,
   and is that backed by a direct test (not just a test that passes the value
@@ -16,7 +16,8 @@ Four curated claims exercise the pipeline against three open-source repos:
   the force-push and deletion probes both report protection?
 - **httpx contradiction** — does a new client instead default to ten seconds?
 - **Pluggy** (Python) — does a `firstresult=True` hook return the first
-  non-`None` implementation result as a single value?
+  non-`None` implementation result as a single value? Two adversarial cases
+  claim it returns a list or cite only a related test.
 
 The original HTTPX experiment caught a model falsely crediting a related test
 as direct. In the unified workflow, two sequential local model agents review
@@ -42,9 +43,10 @@ data/httpx/          vendored clone of github.com/encode/httpx, pinned to a
                       commit referenced by cases/default_timeout.json
 data/scorecard/      vendored clone of github.com/ossf/scorecard, pinned to a
                       commit referenced by cases/scorecard_branch_protection.json
+data/pluggy/         vendored clone of github.com/pytest-dev/pluggy
 cases/*.json         one "claim" per file: the claim text, the doc/code/test
                       citations that back it, and the expected verdict
-indexes/*.sqlite     FTS5 indexes built from data/httpx and data/scorecard
+indexes/*.sqlite     FTS5 indexes built from the three source repos
                       (regenerate with the index_*.py scripts below — nothing
                       here is hand-maintained)
 index_*.py           build the FTS5 indexes for docs / code / tests
@@ -82,6 +84,10 @@ policy.json           source allowlist, role permissions, context cap, and
 tests/test_lab.py     cross-layer regression tests
 index_pluggy.py       builds Pluggy RST requirements, Python code, and test
                       indexes using only the Python standard library
+benchmark_retrieval.py
+                      measures pinned, hand-reviewed retrieval targets
+benchmarks/retrieval.json
+                      five target citations and their natural-language queries
 ```
 
 ## Setup
@@ -155,7 +161,7 @@ git -C data/pluggy checkout 54fb4ddda7d0e0dc9dde12fa5cebb9ae13d8cff9
 python3 index_pluggy.py
 ```
 
-The new case is `cases/pluggy_firstresult.json`. The lab's regression suite
+The main case is `cases/pluggy_firstresult.json`. The lab's regression suite
 executes a small behavior check against the pinned Pluggy source without
 installing pytest.
 
@@ -170,6 +176,9 @@ python3 lab.py run --case cases/default_timeout.json --mode offline
 python3 lab.py run --case cases/default_timeout_ten.json --mode offline
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline
 python3 lab.py run --case cases/pluggy_firstresult.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult_list.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult_related_test.json --mode offline
+python3 benchmark_retrieval.py
 python3 lab.py run --case cases/pluggy_firstresult.json --mode local
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode local
 python3 -m unittest discover -s tests -v
@@ -180,7 +189,7 @@ for agent roles, RBAC exercises, evidence semantics, and extension steps.
 
 ## Limits
 
-The registered deterministic proofs cover these four claims only. New claims
+The registered deterministic proofs cover these six cases only. New claims
 fail closed as `insufficient`/`undetermined` until given a proof. The role
 policy is an educational application check, not isolation from someone who
 can edit local files. Both model agents use the same local model, so their

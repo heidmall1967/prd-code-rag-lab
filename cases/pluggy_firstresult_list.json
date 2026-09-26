@@ -1,0 +1,35 @@
+{
+  "id": "pluggy.firstresult.list",
+  "repo": "pluggy",
+  "commit": "54fb4dd",
+  "claim": "A Pluggy hook marked firstresult=True returns all non-None implementation results as a list.",
+  "requirement": {
+    "path": "docs/index.rst",
+    "start_line": 671,
+    "end_line": 688,
+    "focus": [671, 686]
+  },
+  "implementation": [
+    {
+      "path": "src/pluggy/_execution.py",
+      "symbol": "_execution._multicall",
+      "focus": [145, 160]
+    }
+  ],
+  "tests": [
+    {
+      "path": "testing/test_invocations.py",
+      "name": "test_firstresult_definition",
+      "focus": [126, 170]
+    },
+    {
+      "path": "testing/test_multicall.py",
+      "name": "test_call_none_is_no_result",
+      "focus": [63, 75]
+    }
+  ],
+  "expected": {
+    "implementation": "contradicts",
+    "direct_test_status": "not_established"
+  }
+}

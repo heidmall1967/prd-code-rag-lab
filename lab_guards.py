@@ -1,4 +1,4 @@
-"""Narrow, deterministic proofs for the two curated learning cases.
+"""Narrow, deterministic proofs for the curated learning cases.
 
 These checks establish only their named claims. New cases must get their own
 proofs; a model verdict alone never turns an unrecognized claim into a fact.
@@ -219,7 +219,8 @@ def _pluggy_ast_proves_first_result(repo: Path) -> bool:
     return stop_after_value and scalar_return
 
 
-def _pluggy_proof(repo: Path, evidence: list[Evidence]) -> Proof:
+def _pluggy_proof(repo: Path, evidence: list[Evidence],
+                  claims_scalar: bool = True) -> Proof:
     docs = "\n".join(item.excerpt for item in evidence
                      if item.kind == "requirement")
     code = next((item.excerpt for item in evidence
@@ -248,11 +249,15 @@ def _pluggy_proof(repo: Path, evidence: list[Evidence]) -> Proof:
         "firstresult=False" in multicall,
         "assert res == [1]" in multicall,
     ))
-    return Proof("supports" if implementation else "insufficient",
-                 "established" if direct else "not_established", [
+    verdict = ("supports" if claims_scalar else "contradicts") \
+        if implementation else "insufficient"
+    return Proof(verdict,
+                 "established" if direct and claims_scalar else "not_established", [
         "Pinned AST and cited lines show None is skipped and the first result is returned as a scalar."
         if implementation else "Pluggy implementation proof is incomplete.",
-        "Cited invocation and multicall tests check the scalar result and None handling."
+        ("Cited tests check a scalar result, contradicting the claimed list."
+         if not claims_scalar else
+         "Cited invocation and multicall tests check the scalar result and None handling.")
         if direct else "The cited tests do not establish the scalar result and None handling.",
     ])
 
@@ -275,6 +280,16 @@ def prove(case: dict, repo: Path, evidence: list[Evidence]) -> Proof:
             "A Pluggy hook marked firstresult=True returns the first non-None "
             "implementation result as a single value."
         ),
+        "pluggy.firstresult.list": (
+            "pluggy",
+            "A Pluggy hook marked firstresult=True returns all non-None "
+            "implementation results as a list."
+        ),
+        "pluggy.firstresult.related_test": (
+            "pluggy",
+            "A Pluggy hook marked firstresult=True returns the first non-None "
+            "implementation result as a single value."
+        ),
     }
     identity = registered.get(case["id"])
     if identity is None or case.get("repo", case["id"].split(".", 1)[0]) != identity[0] \
@@ -288,6 +303,9 @@ def prove(case: dict, repo: Path, evidence: list[Evidence]) -> Proof:
         return _httpx_proof(repo, evidence, 10.0)
     if case["id"] == "scorecard.branch_protection.tier1":
         return _scorecard_proof(evidence)
-    if case["id"] == "pluggy.firstresult.scalar":
+    if case["id"] in ("pluggy.firstresult.scalar",
+                      "pluggy.firstresult.related_test"):
         return _pluggy_proof(repo, evidence)
+    if case["id"] == "pluggy.firstresult.list":
+        return _pluggy_proof(repo, evidence, claims_scalar=False)
     raise AssertionError("Registered case has no proof")

@@ -43,8 +43,11 @@ implemented. The final verdict is deterministic rather than model-generated.
 The repository contains the lab's own code and case definitions. The source
 clones and generated indexes are ignored by Git. Rebuild them from the pinned
 source commits with `bash bootstrap.sh` from the project root. That command
-also runs the lab tests and retrieval benchmark. To rebuild each component
-manually instead, use:
+also runs the lab tests and retrieval benchmark. The
+[README's resource and security section](README.md#downloads-storage-and-hardware)
+lists exactly what bootstrap downloads, measured disk and model memory use,
+recommended headroom, and the local-service/privacy boundaries. To rebuild
+each component manually instead, use:
 
 ```bash
 git clone https://github.com/encode/httpx.git data/httpx

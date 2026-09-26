@@ -4,6 +4,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+echo "Setup will clone pinned HTTPX, Scorecard, and Pluggy if absent; build local"
+echo "indexes and a Go chunker; then run tests and a benchmark."
+echo "It does not install system packages or pull an Ollama model."
+
 for program in git go python3; do
   if ! command -v "$program" >/dev/null 2>&1; then
     echo "Missing required program: $program" >&2

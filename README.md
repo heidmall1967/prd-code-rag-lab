@@ -63,6 +63,84 @@ In a second terminal, run
 The final guardrail should return `contradicts / not_established` even if the
 model disagrees.
 
+## Downloads, storage, and hardware
+
+`bash bootstrap.sh` does **not** install system packages, Python packages,
+Go modules, Ollama, or a model. It uses your existing Python, Git, and Go;
+clones only the pinned open-source HTTPX, Scorecard, and Pluggy repositories;
+builds a local Go chunker and nine SQLite FTS5 indexes; then runs the lab tests
+and benchmark. It does execute this repository's indexing/test code, and one
+lab test imports the pinned Pluggy source. Review the script before running it.
+No `sudo` is needed.
+
+These are measurements from the Ubuntu development machine on 2026-09-26,
+not download guarantees. Upstream Git histories and Ollama packaging can grow.
+
+| Item | Measured disk use | Pulled by |
+| --- | ---: | --- |
+| HTTPX / Scorecard / Pluggy source clones, including Git history | 6 MB / 104 MB / 1.2 MB | `bootstrap.sh` |
+| All nine SQLite indexes and Go chunker | 1.6 MB + 2.9 MB | `bootstrap.sh` |
+| Go build cache outside the repo | 35 MB | Go build |
+| Qwen2.5 1.5B model (Apache-2.0) | 986 MB (about 0.92 GiB) | Optional `ollama pull qwen2.5:1.5b` |
+| Installed Ollama binary and runtime libraries on this machine | 37 MB + 2.1 GB | Separate Ollama installation; varies |
+
+The bootstrap itself adds about 115 MB under the project directory here.
+The optional model is another ~1 GB; an Ollama installation can be larger than
+the model because it includes runtime libraries. This machine also has a 3B
+model, so its total model store is 2.8 GB; **that 3B model is not required**.
+Plan for at least **2 GB free** for offline setup if prerequisites are already
+installed, or **6–8 GB free** for a first-time Ollama plus model setup.
+The [Ollama model page](https://ollama.com/library/qwen2.5) lists the 1.5B
+download size; [Ollama's FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.mdx)
+explains where its model store lives on different installations.
+
+The offline search and case workflow needs no GPU or model. On this 12 GB RAM,
+2 GB VRAM machine, one local 4,096-token Qwen2.5 1.5B run reported a 1.4 GB
+loaded model, used about 0.8 GB resident runner RAM, and increased GPU use by
+about 1.0 GB. Your driver or Ollama build may instead use more system RAM and
+less GPU. Keep roughly 3–4 GB RAM available, use one case/model at a time,
+and expect local model calls to take tens of seconds on an older i5. The lab
+already caps context at 4,096 tokens and calls reviewer and critic
+sequentially. Larger contexts and parallel requests increase memory use
+([Ollama context guidance](https://github.com/ollama/ollama/blob/main/docs/context-length.mdx),
+[FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.mdx)).
+
+If Ollama is not already running, a conservative local-only configuration is:
+
+```bash
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NUM_PARALLEL=1 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
+```
+
+Use `ollama ps` to check CPU/GPU placement and loaded size, `free -h` for
+available RAM, and `nvidia-smi` if available. GPU use depends on hardware,
+driver, and build; do not require it for this lab
+([Ollama hardware notes](https://github.com/ollama/ollama/blob/main/docs/gpu.mdx)).
+Run `ollama stop qwen2.5:1.5b` after a session if you want to release its
+RAM and VRAM immediately.
+
+## Security and privacy boundaries
+
+- Bootstrap connects to GitHub for the three open-source clones. The optional
+  model pull connects to Ollama's model registry. Offline cases make no paid
+  API calls; local cases send prompts only to the policy-pinned
+  `127.0.0.1:11434` endpoint.
+- Keep Ollama bound to `127.0.0.1`. Changing `OLLAMA_HOST` to `0.0.0.0` or
+  exposing port 11434 can make the local model service reachable from your
+  network ([Ollama FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.mdx)).
+- Pinned commits and source-line checks detect stale or changed evidence.
+  They do not make upstream code intrinsically safe. Bootstrap runs local
+  scripts, builds Go code, and the lab test imports Pluggy; use trusted
+  checkouts and avoid `sudo`.
+- Retrieved text is untrusted input to the model and can contain misleading
+  instructions. Model opinions are recorded, while narrow deterministic
+  checks decide registered cases. This is not a general prompt-injection
+  defense or proof engine.
+- The `--principal` RBAC control is educational; anyone with local access can
+  choose another principal or edit `policy.json`. The HTML PRD query builder
+  runs locally, but a copied query may remain in shell history. Keep secrets
+  out of cases and queries. Generated `runs/` traces are ignored by Git but
+  can include model opinions that repeat supplied text.
+
 Six curated cases exercise the pipeline against three open-source repos:
 
 - **httpx** (Python) — does `httpx.Client()` really default to a 5-second timeout,

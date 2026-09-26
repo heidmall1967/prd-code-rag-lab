@@ -15,7 +15,8 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parent
 TABLES = {"requirement": "requirements", "code": "code", "test": "tests"}
 KEYS = {"httpx": {"code": "symbol", "test": "name"},
-        "scorecard": {"code": "symbol", "test": "symbol"}}
+        "scorecard": {"code": "symbol", "test": "symbol"},
+        "pluggy": {"code": "symbol", "test": "name"}}
 
 
 class LabError(Exception):
@@ -270,6 +271,10 @@ def correlate_candidates(store: EvidenceStore, query: str,
     for seed in groups["code"][:1]:
         label = seed["evidence"].label
         anchor = label.split(".", 1)[0]
+        if anchor == Path(seed["evidence"].path).stem:
+            # Some indexes prefix symbols with the module name. Following that
+            # prefix mostly finds unrelated functions in the same file.
+            continue
         if len(anchor) < 8 or not ("_" in anchor or any(c.isupper() for c in anchor)):
             continue
         for row in store.search("code", anchor, limit=20):

@@ -32,6 +32,7 @@ retrieval, verification, packet, and adjudication stages.
 | --- | --- | --- | --- |
 | [HTTPX](https://github.com/encode/httpx) | Python docs, code, tests | BSD-3-Clause | `b5addb64f0161ff6bfe94c124ef76f6a1fba5254` |
 | [OpenSSF Scorecard](https://github.com/ossf/scorecard) | Go docs, code, tests | Apache-2.0 | `f92023a3f77879f96e0c9c1305f289d755be4bb6` |
+| [Pluggy](https://github.com/pytest-dev/pluggy) | RST docs, Python code, tests | MIT | `54fb4ddda7d0e0dc9dde12fa5cebb9ae13d8cff9` |
 
 The repository contains the lab's own code and case definitions. The source
 clones and generated indexes are ignored by Git. Rebuild them from the pinned
@@ -42,6 +43,8 @@ git clone https://github.com/encode/httpx.git data/httpx
 git -C data/httpx checkout b5addb64f0161ff6bfe94c124ef76f6a1fba5254
 git clone https://github.com/ossf/scorecard.git data/scorecard
 git -C data/scorecard checkout f92023a3f77879f96e0c9c1305f289d755be4bb6
+git clone https://github.com/pytest-dev/pluggy.git data/pluggy
+git -C data/pluggy checkout 54fb4ddda7d0e0dc9dde12fa5cebb9ae13d8cff9
 
 python3 index_docs.py
 python3 index_code.py
@@ -55,6 +58,7 @@ bin/go_chunks \
   > indexes/scorecard_samples.jsonl
 python3 index_scorecard_docs.py
 python3 index_scorecard_go.py
+python3 index_pluggy.py
 ```
 
 Use `ollama pull qwen2.5:1.5b` and start Ollama locally for model runs. The
@@ -67,6 +71,8 @@ paid API. The offline workflow works without Ollama.
 python3 lab.py run --case cases/default_timeout.json --mode offline
 python3 lab.py run --case cases/default_timeout_ten.json --mode offline
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult.json --mode local
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode local
 ```
 
@@ -77,6 +83,7 @@ The expected final results are:
 | HTTPX five-second default | `supports` | `not_established` |
 | HTTPX ten-second default | `contradicts` | `not_established` |
 | Scorecard Branch-Protection Tier 1 | `supports` | `established` |
+| Pluggy first non-`None` scalar result | `supports` | `established` |
 
 `not_established` means the **cited tests** do not establish that exact claim;
 it does not assert that no suitable test exists elsewhere. `expected` in a case
@@ -97,6 +104,7 @@ python3 lab.py discover --repo scorecard --kind code --query force
 python3 lab.py discover --repo scorecard --kind test --query force
 python3 lab.py correlate --repo scorecard --query 'force push'
 python3 lab.py correlate --repo httpx --query 'default timeout'
+python3 lab.py correlate --repo pluggy --query firstresult
 ```
 
 FTS5 scores rank lexical matches; they do not prove relevance. `correlate`
@@ -104,8 +112,10 @@ merges candidates from all three databases, suggests links on shared query
 terms, and follows prominent code symbols into a second set of references.
 This second hop finds HTTPX client constructors through
 `DEFAULT_TIMEOUT_CONFIG`, which a plain timeout query ranks poorly. These are
-candidate links, not semantic proof. Camel-case Go symbols may still require
-searching the exact symbol or inspecting source manually. Case files preserve
+candidate links, not semantic proof. The Pluggy `firstresult` query ranks hook
+dispatch helpers above the core `_multicall` loop; that loop was chosen after
+source inspection. Camel-case Go symbols may still require searching the
+exact symbol or inspecting source manually. Case files preserve
 reviewed citations and small
 `focus` ranges. `lab_core.py` rejects a stale index, a source mismatch, a path
 outside the source checkout, or a focus outside the indexed symbol. It then
@@ -140,7 +150,8 @@ the operating system.
 
 The provenance and context checks apply to every case. `lab_guards.py` contains
 claim-specific proofs: Python AST checks for HTTPX's constant and constructor
-defaults, and explicit cited Scorecard branches plus the table case and runner.
+defaults, explicit cited Scorecard branches plus the table case and runner,
+and a Pluggy AST check for skipping `None`, stopping, and returning a scalar.
 Unknown case IDs return `insufficient` and `undetermined`. An LLM cannot
 promote an unregistered claim to `supports` or `established`. Source text is
 treated as untrusted prompt data, not as instructions.
@@ -162,3 +173,7 @@ Run `python3 -m unittest discover -s tests -v` after changes. The project is
 still a learning lab: there is no general semantic proof for arbitrary PRDs,
 no operating-system RBAC isolation, no browser UI, and no independent model
 ensemble.
+
+The Pluggy case cites upstream test source. The regression suite also executes
+a small test against the pinned Pluggy package without pytest. It does not run
+Pluggy's full upstream pytest suite.

@@ -2,9 +2,11 @@
 
 import copy
 import io
+import importlib
 import json
 import shutil
 import sqlite3
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,9 +24,8 @@ class LabWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.policy = load_policy()
-        if not (ROOT / "data/httpx/.git").exists() or not (
-            ROOT / "data/scorecard/.git"
-        ).exists():
+        if any(not (ROOT / f"data/{repo}/.git").exists()
+               for repo in ("httpx", "scorecard", "pluggy")):
             raise unittest.SkipTest("Pinned source repositories are not checked out")
 
     def evidence_for(self, filename):
@@ -34,7 +35,7 @@ class LabWorkflowTests(unittest.TestCase):
         evidence = [store.fetch(kind, ref) for kind, ref in case_references(case)]
         return case, store, evidence
 
-    def test_three_curated_claims_have_distinct_verdicts(self):
+    def test_four_curated_claims_have_distinct_verdicts(self):
         positive, store, evidence = self.evidence_for("default_timeout.json")
         result = prove(positive, store.repo, evidence)
         self.assertEqual((result.implementation, result.direct_test_status),
@@ -49,6 +50,11 @@ class LabWorkflowTests(unittest.TestCase):
             "scorecard_branch_protection.json"
         )
         result = prove(scorecard, store.repo, evidence)
+        self.assertEqual((result.implementation, result.direct_test_status),
+                         ("supports", "established"))
+
+        pluggy, store, evidence = self.evidence_for("pluggy_firstresult.json")
+        result = prove(pluggy, store.repo, evidence)
         self.assertEqual((result.implementation, result.direct_test_status),
                          ("supports", "established"))
 
@@ -68,6 +74,59 @@ class LabWorkflowTests(unittest.TestCase):
         result = prove(case, store.repo, evidence)
         self.assertEqual((result.implementation, result.direct_test_status),
                          ("insufficient", "undetermined"))
+
+    def test_pluggy_needs_both_cited_tests_for_direct_status(self):
+        case, store, evidence = self.evidence_for("pluggy_firstresult.json")
+        reduced = [item for item in evidence
+                   if item.label != "test_call_none_is_no_result"]
+        result = prove(case, store.repo, reduced)
+        self.assertEqual(result.implementation, "supports")
+        self.assertEqual(result.direct_test_status, "not_established")
+
+    def test_pinned_pluggy_runtime_skips_none_and_stops(self):
+        source = str((ROOT / "data/pluggy/src").resolve())
+        sys.path.insert(0, source)
+        try:
+            pluggy = importlib.import_module("pluggy")
+            self.assertTrue(Path(pluggy.__file__).resolve().is_relative_to(
+                (ROOT / "data/pluggy").resolve()
+            ))
+            hookspec = pluggy.HookspecMarker("lab-firstresult")
+            hookimpl = pluggy.HookimplMarker("lab-firstresult")
+            calls = []
+
+            class Spec:
+                @hookspec(firstresult=True)
+                def result(self, value):
+                    pass
+
+            class Later:
+                @hookimpl
+                def result(self, value):
+                    calls.append("later")
+                    return 99
+
+            class Answer:
+                @hookimpl
+                def result(self, value):
+                    calls.append("answer")
+                    return value + 1
+
+            class NoneResult:
+                @hookimpl
+                def result(self, value):
+                    calls.append("none")
+                    return None
+
+            manager = pluggy.PluginManager("lab-firstresult")
+            manager.add_hookspecs(Spec)
+            manager.register(Later())
+            manager.register(Answer())
+            manager.register(NoneResult())
+            self.assertEqual(manager.hook.result(value=1), 2)
+            self.assertEqual(calls, ["none", "answer"])
+        finally:
+            sys.path.pop(0)
 
     def test_context_budget_fails_closed(self):
         case, _, evidence = self.evidence_for("scorecard_branch_protection.json")
@@ -140,6 +199,13 @@ class LabWorkflowTests(unittest.TestCase):
         self.assertTrue(any("DEFAULT_TIMEOUT_CONFIG" in link["symbol"]
                             and "httpx/_client.py:639-716" in link["to"]
                             for link in result["symbol_references"]))
+        pluggy = correlate_candidates(
+            EvidenceStore(self.policy, "pluggy"), "firstresult", limit=3
+        )
+        self.assertTrue(all(pluggy["candidates"][kind]
+                            for kind in ("requirement", "code", "test")))
+        self.assertFalse(any(link["symbol"] == "_manager"
+                             for link in pluggy["symbol_references"]))
 
     def test_nonlocal_model_endpoint_is_rejected(self):
         bad = copy.deepcopy(self.policy)

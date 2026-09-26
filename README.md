@@ -7,7 +7,7 @@ verification:
     lexical index (FTS5) → cited excerpt → provenance re-check against disk/git
         → bounded-context packet → LLM verdict → deterministic guardrail
 
-Three curated claims exercise the pipeline against two open-source repos:
+Four curated claims exercise the pipeline against three open-source repos:
 
 - **httpx** (Python) — does `httpx.Client()` really default to a 5-second timeout,
   and is that backed by a direct test (not just a test that passes the value
@@ -15,6 +15,8 @@ Three curated claims exercise the pipeline against two open-source repos:
 - **Scorecard** (Go) — does the Branch-Protection check really award Tier 1 when
   the force-push and deletion probes both report protection?
 - **httpx contradiction** — does a new client instead default to ten seconds?
+- **Pluggy** (Python) — does a `firstresult=True` hook return the first
+  non-`None` implementation result as a single value?
 
 The original HTTPX experiment caught a model falsely crediting a related test
 as direct. In the unified workflow, two sequential local model agents review
@@ -66,9 +68,8 @@ evidence_guard.py     deterministic checks that can downgrade or correct an
                       LLM verdict (e.g. catches a test being credited with
                       "supports" when it never constructs a client)
 judge_one.py,
-review_packet.py     send a single evidence excerpt, or a whole packet, to the
-                      local model and print its verdict + the guardrail's
-                      correction (httpx case only — see "Known gaps" below)
+review_packet.py     older HTTPX-only experiment with local model judgment
+                      and a specific direct-test guardrail
 run_case.py           runs the full httpx pipeline end to end (verify →
                       check_implementation → packet → review_packet) and
                       writes a trace to runs/latest.json
@@ -79,6 +80,8 @@ lab_guards.py         narrow deterministic proofs for the curated claims
 policy.json           source allowlist, role permissions, context cap, and
                       local-only model endpoint
 tests/test_lab.py     cross-layer regression tests
+index_pluggy.py       builds Pluggy RST requirements, Python code, and test
+                      indexes using only the Python standard library
 ```
 
 ## Setup
@@ -141,15 +144,33 @@ python3 verify_scorecard.py
 python3 packet_scorecard.py
 ```
 
+## Running the Pluggy case
+
+Pluggy provides an independent MIT-licensed plugin-system example with RST
+documentation and Python code. Rebuild its three indexes with:
+
+```bash
+git clone https://github.com/pytest-dev/pluggy.git data/pluggy
+git -C data/pluggy checkout 54fb4ddda7d0e0dc9dde12fa5cebb9ae13d8cff9
+python3 index_pluggy.py
+```
+
+The new case is `cases/pluggy_firstresult.json`. The lab's regression suite
+executes a small behavior check against the pinned Pluggy source without
+installing pytest.
+
 ## Unified learning workflow
 
 ```bash
 python3 lab.py roles
 python3 lab.py discover --repo scorecard --kind requirement --query force
 python3 lab.py correlate --repo scorecard --query 'force push'
+python3 lab.py correlate --repo pluggy --query firstresult
 python3 lab.py run --case cases/default_timeout.json --mode offline
 python3 lab.py run --case cases/default_timeout_ten.json --mode offline
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult.json --mode offline
+python3 lab.py run --case cases/pluggy_firstresult.json --mode local
 python3 lab.py run --case cases/scorecard_branch_protection.json --mode local
 python3 -m unittest discover -s tests -v
 ```
@@ -159,7 +180,7 @@ for agent roles, RBAC exercises, evidence semantics, and extension steps.
 
 ## Limits
 
-The registered deterministic proofs cover these three claims only. New claims
+The registered deterministic proofs cover these four claims only. New claims
 fail closed as `insufficient`/`undetermined` until given a proof. The role
 policy is an educational application check, not isolation from someone who
 can edit local files. Both model agents use the same local model, so their

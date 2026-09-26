@@ -18,6 +18,15 @@
         "code": "scorecard_code.sqlite",
         "test": "scorecard_tests.sqlite"
       }
+    },
+    "pluggy": {
+      "path": "data/pluggy",
+      "commit": "54fb4ddda7d0e0dc9dde12fa5cebb9ae13d8cff9",
+      "indexes": {
+        "requirement": "pluggy_requirements.sqlite",
+        "code": "pluggy_code.sqlite",
+        "test": "pluggy_tests.sqlite"
+      }
     }
   },
   "principals": {

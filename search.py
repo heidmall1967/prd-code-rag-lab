@@ -12,6 +12,9 @@ sources = {
   ) ,
     "scorecard_code": ("scorecard_code.sqlite", "code", "symbol"),
     "scorecard_tests": ("scorecard_tests.sqlite", "tests", "symbol"),
+    "pluggy_requirements": ("pluggy_requirements.sqlite", "requirements", "heading"),
+    "pluggy_code": ("pluggy_code.sqlite", "code", "symbol"),
+    "pluggy_tests": ("pluggy_tests.sqlite", "tests", "name"),
 
 }
 
